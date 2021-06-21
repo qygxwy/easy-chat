@@ -1,5 +1,9 @@
 package com.kuo.easychat.client;
 
+import com.alibaba.fastjson.JSONObject;
+import com.kuo.easychat.common.action.Action;
+import com.kuo.easychat.common.event.EventPool;
+import com.kuo.easychat.common.event.IEvent;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -103,24 +107,24 @@ public class WebSocketClient {
             }
             TextWebSocketFrame request = (TextWebSocketFrame) o;
             System.out.println("receive text:" + request.text());
-//            Action action;
-//            try {
-//                action = JSONObject.parseObject(request.text(), Action.class);
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//                System.out.println("transfer to object from json string failed. data: " + request.text());
-//                return ;
-//            }
-//            IEvent<Action, Action> event = EventPool.getInstance().find(action.getAction());
-//            if ( null == event ) {
-//                System.out.println("no event found for key: " + action.getAction());
-//                return ;
-//            }
-//            Action respAction = event.handle(action, ctx.channel());
-//            if ( null != respAction ) {
-//                System.out.println("resp action: " + action);
-//                ctx.writeAndFlush(new TextWebSocketFrame(JSONObject.toJSONString(respAction)));
-//            }
+            Action action;
+            try {
+                action = JSONObject.parseObject(request.text(), Action.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("transfer to object from json string failed. data: " + request.text());
+                return ;
+            }
+            IEvent<Action, Action> event = EventPool.getInstance().find(action.getAction());
+            if ( null == event ) {
+                System.out.println("no event found for key: " + action.getAction());
+                return ;
+            }
+            Action respAction = event.handle(action, ctx.channel());
+            if ( null != respAction ) {
+                System.out.println("resp action: " + action);
+                ctx.writeAndFlush(new TextWebSocketFrame(JSONObject.toJSONString(respAction)));
+            }
         }
     }
 }

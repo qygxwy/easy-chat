@@ -43,18 +43,24 @@ public class WebSocketServer {
     }
 
     private void init() {
+        // 服务启动类，任务分配自动处理
         serverBootstrap = new ServerBootstrap();
         serverBootstrap.option(ChannelOption.SO_KEEPALIVE, true);
         serverBootstrap.option(ChannelOption.TCP_NODELAY, true);
         serverBootstrap.option(ChannelOption.SO_BACKLOG, 2014);
 
-        // 初始化线程池
+        // 初始化线程池（主从线程模型）
+        // 主线程组，用于接收客户端的链接，但不做任何处理
         boss = new NioEventLoopGroup();
+        // 从线程组，主线程会把任务转给从线程组进行处理
         worker = new NioEventLoopGroup(5);
 
         // 初始化bootstrap配置
         serverBootstrap.group(boss, worker)
+                // 设置NIO的双向通道
                 .channel(NioServerSocketChannel.class)
+                // 子处理器，用于处理workerGroup
+                // 设置channel初始化器，每一个channel由多个handle共同组成管道（pipeline）
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) {
